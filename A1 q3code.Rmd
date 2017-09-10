@@ -1,0 +1,194 @@
+---
+title: "747q3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "/Volumes/VERBATIM/Postgrad/Stats747/Assignment 1")
+library("readxl")
+```
+Recoding the Q4
+```{r}
+data.df=read_xlsx("q3data.xlsx")
+newdata.df=data.df
+#outer loop to check every row of data
+for (i in 1:nrow(newdata.df)){
+  
+  #inner loop to check every column of the data
+  #it can be seen that the concept ratings are in columns 8-15 in the data.df
+  for (j in 8:15){
+    #1=highly revelant
+    if(newdata.df[i,j]==1){
+      #highly relevant=10
+      newdata.df[i,j]=10
+      #2=Quite revelant
+    }else if(newdata.df[i,j]==2){
+      #quiet relevant=10
+      newdata.df[i,j]=5
+      #3=Not particularly relevant
+    }else if(newdata.df[i,j]==3){
+      #not particularly relevant=10
+      newdata.df[i,j]=1
+      #The rest (Not at all relevant, Dont know),4or5
+    }else{
+      #all other=0
+      newdata.df[i,j]=0
+    }
+    
+  }
+  
+}
+
+#setting up a name thats easier to work with, concept j-r excluding o
+conNames=paste("Concept", letters[10:18][-6] , sep="_")
+colnames(newdata.df)[8:15]=conNames
+
+#group1, Under 40, no kids aged 5-10 years
+#under 40 means the age code would be 1 or 2
+#no kids aged 5-10 means there will be 0 in the age 5-10 column
+group1=which(newdata.df$Age<=2 & newdata.df$`SQ2a 5-10 years`==0)
+length(group1)
+
+#group2, Have kids aged 5-10
+#Have kids aged 5-10 means that there will be 1 in the age 5-10 column
+group2=which(newdata.df$`SQ2a 5-10 years`==1)
+length(group2)
+
+#group1, Age 40+, have no kids aged 5-10 years
+#under 40 means the age code would be 3 or 4
+#no kids aged 5-10 means there will be 0 in the age 5-10 column
+group3=which(newdata.df$Age>2 & newdata.df$`SQ2a 5-10 years`==0)
+length(group3)
+
+#Total adds up to 202, (checking)
+print(paste("total for all 3 groups is:",length(group1)+length(group2)+length(group3)))
+
+
+
+#create a result dataframe to store the means/variances
+result=data.frame(matrix(ncol=length(conNames),nrow=3))
+#change the column names to the concept names
+colnames(result)=conNames
+
+#put the means for each concept/group in the data frame
+#colnames 8-15 is the concept j,k,l,m,n,p,q,r columns
+
+# 1:3 since 3 groups
+for (i in 1:3){
+  # 1:8 since 8 concepts
+  for (j in 1:8){
+    #tempInd gives the indicies of the columns where the concepts columns are in the original dataset
+    tempInd=c(8,9,10,11,12,13,14,15)
+    #if statements to filter the groups
+    if(i==1){
+      result[i,j]=mean(((newdata.df[,tempInd[j]])[[1]])[group1])
+    }
+    if(i==2){
+      result[i,j]=mean(((newdata.df[,tempInd[j]])[[1]])[group2])
+      
+    }
+    if(i==3){
+      result[i,j]=mean(((newdata.df[,tempInd[j]])[[1]])[group3])
+    }
+  }
+  #(newdata.df[,tempInd[1]])
+
+}
+
+
+#calculate the weighted means for each concepts/groups and bind the it with the data
+results=rbind(result,colMeans(result))
+cat("original mean")
+results
+
+```
+
+Original Var
+```{r}
+#calculate the variance of mean
+#########rmb to put the 52 98 52 table, is in excel
+var_J=cbind(var(newdata.df$Concept_j[group1])/52,var(newdata.df$Concept_j[group2])/98,var(newdata.df$Concept_j[group3])/52)
+var_K=cbind(var(newdata.df$Concept_k[group1])/52,var(newdata.df$Concept_k[group2])/98,var(newdata.df$Concept_k[group3])/52)
+var_L=cbind(var(newdata.df$Concept_l[group1])/52,var(newdata.df$Concept_l[group2])/98,var(newdata.df$Concept_l[group3])/52)
+var_M=cbind(var(newdata.df$Concept_m[group1])/52,var(newdata.df$Concept_m[group2])/98,var(newdata.df$Concept_m[group3])/52)
+var_N=cbind(var(newdata.df$Concept_n[group1])/52,var(newdata.df$Concept_n[group2])/98,var(newdata.df$Concept_n[group3])/52)
+var_P=cbind(var(newdata.df$Concept_p[group1])/52,var(newdata.df$Concept_p[group2])/98,var(newdata.df$Concept_p[group3])/52)
+var_Q=cbind(var(newdata.df$Concept_q[group1])/52,var(newdata.df$Concept_q[group2])/98,var(newdata.df$Concept_q[group3])/52)
+var_R=cbind(var(newdata.df$Concept_r[group1])/52,var(newdata.df$Concept_r[group2])/98,var(newdata.df$Concept_r[group3])/52)
+#binding everything together
+grpVar=rbind(var_J,var_K,var_L,var_M,var_N,var_P,var_Q,var_R)
+#column totals
+grpVar=rbind(grpVar,colSums(grpVar))
+#row totals
+grpVar=cbind(grpVar,rowSums(grpVar))
+#giving column names and row names
+rownames(grpVar)=c(conNames,"Total")
+colnames(grpVar)=c("Group1","Group2","Group3","Total")
+#printing the data
+cat("original var")
+grpVar
+```
+
+Weighted mean
+
+```{r}
+#calculate the weighted mean/var
+#we know the weights for each group from the question
+#group1=0.35, group2=0.325, group3=0.325
+grpWeight=c(0.35,0.325,0.325)
+sum(grpWeight)
+#use the original sampled mean and multiply them with the actual proportion for the weighted mean
+weightMean_J=c(result[1,1]*grpWeight[1],result[2,1]*grpWeight[2],result[3,1]*grpWeight[3])
+weightMean_K=c(result[1,2]*grpWeight[1],result[2,2]*grpWeight[2],result[3,2]*grpWeight[3])
+weightMean_L=c(result[1,3]*grpWeight[1],result[2,3]*grpWeight[2],result[3,3]*grpWeight[3])
+weightMean_M=c(result[1,4]*grpWeight[1],result[2,4]*grpWeight[2],result[3,4]*grpWeight[3])
+weightMean_N=c(result[1,5]*grpWeight[1],result[2,5]*grpWeight[2],result[3,5]*grpWeight[3])
+weightMean_P=c(result[1,6]*grpWeight[1],result[2,6]*grpWeight[2],result[3,6]*grpWeight[3])
+weightMean_Q=c(result[1,7]*grpWeight[1],result[2,7]*grpWeight[2],result[3,7]*grpWeight[3])
+weightMean_R=c(result[1,8]*grpWeight[1],result[2,8]*grpWeight[2],result[3,8]*grpWeight[3])
+#binding everything together
+wgtMean=rbind(weightMean_J,weightMean_K,weightMean_L,weightMean_M,weightMean_N,weightMean_P,weightMean_Q,weightMean_R)
+#column totals
+wgtMean=rbind(wgtMean,colSums(wgtMean))
+#row totals
+wgtMean=cbind(wgtMean,rowSums(wgtMean))
+#giving column names and row names
+rownames(wgtMean)=c(conNames,"Total")
+colnames(wgtMean)=c("Group1","Group2","Group3","Total")
+#printing the data
+cat("original mean")
+wgtMean
+```
+
+weighted variance
+```{r}
+#calculate the weighted mean/var
+#we know the weights for each group from the question
+#group1=0.35, group2=0.325, group3=0.325
+grpWeight=c(0.35,0.325,0.325)
+sum(grpWeight)
+#use the original sampled variance and multiply them with the actual proportion for the weighted variance
+weightVar_J=c(grpVar[1,1]*(grpWeight[1])^2,grpVar[1,2]*(grpWeight[2])^2,grpVar[1,3]*(grpWeight[3])^2)
+weightVar_K=c(grpVar[2,1]*(grpWeight[1])^2,grpVar[2,2]*(grpWeight[2])^2,grpVar[2,3]*(grpWeight[3])^2)
+weightVar_L=c(grpVar[3,1]*(grpWeight[1])^2,grpVar[3,2]*(grpWeight[2])^2,grpVar[3,3]*(grpWeight[3])^2)
+weightVar_M=c(grpVar[4,1]*(grpWeight[1])^2,grpVar[4,2]*(grpWeight[2])^2,grpVar[4,3]*(grpWeight[3])^2)
+weightVar_N=c(grpVar[5,1]*(grpWeight[1])^2,grpVar[5,2]*(grpWeight[2])^2,grpVar[5,3]*(grpWeight[3])^2)
+weightVar_P=c(grpVar[6,1]*(grpWeight[1])^2,grpVar[6,2]*(grpWeight[2])^2,grpVar[6,3]*(grpWeight[3])^2)
+weightVar_Q=c(grpVar[7,1]*(grpWeight[1])^2,grpVar[7,2]*(grpWeight[2])^2,grpVar[7,3]*(grpWeight[3])^2)
+weightVar_R=c(grpVar[8,1]*(grpWeight[1])^2,grpVar[8,2]*(grpWeight[2])^2,grpVar[8,3]*(grpWeight[3])^2)
+#binding everything together
+wgtVar=rbind(weightVar_J,weightVar_K,weightVar_L,weightVar_M,weightVar_N,weightVar_P,weightVar_Q,weightVar_R)
+#column totals
+wgtVar=rbind(wgtVar,colSums(wgtVar))
+#row totals
+wgtVar=cbind(wgtVar,rowSums(wgtVar))
+#giving column names and row names
+rownames(wgtVar)=c(conNames,"Total")
+colnames(wgtVar)=c("Group1","Group2","Group3","Total")
+#printing the data
+cat("original var")
+wgtVar
+```
+
+

@@ -1,0 +1,166 @@
+---
+title: "Q3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Setup and no missing data model
+```{r}
+#Generate 1000 valure with an underlying linear relationship
+#Normally distributed
+x = rnorm(1000)
+#alpha, beta, and error values for the equation
+alpha=1
+beta=3
+er=2
+#linear equation alpha + betaX + error(Normally Distributed)
+y = alpha + beta*x + rnorm(runif(1000),mean=0,sd=er)
+#linear model
+fit=lm(y~x)
+summary(fit)
+
+sd(fit$residuals)
+
+#plot the data
+plot(y~x,main=paste("y=",coef(fit[1])[1],"+",coef(fit[1])[2],"X","\n R^2="
+                    ,summary(fit)$r.squared," ,sd=",er,sep=""))
+#draw best line of fit
+abline(coef(fit[1]),coef(fit[2]),col="red",lwd=5)
+```
+
+Missing Data list-wise deleted
+```{r}
+data=data.frame(x=x, y=y)
+sampXY=data
+#percent of missingness indata
+miss=0.2
+#create the missingness to X
+for(i in 1:dim(sampXY)[1]){
+  #create % of missingnss
+  cut=runif(2,0,1)
+  #create missingness to X
+  if(cut[1] < miss){
+    sampXY$x[i]=NA
+  }
+  #create missingness to Y
+  if(cut[2] < miss){
+    sampXY$y[i]=NA
+  }
+}
+q4=sampXY
+#check list-wise
+#if X is NA, make y NA also
+for(i in 1:dim(sampXY)[1]){
+  if(is.na(sampXY$x[i])){
+    sampXY$y[i]=NA
+  }
+}
+#if X is NA, make y NA also
+for(i in 1:dim(sampXY)[1]){
+  if(is.na(sampXY$y[i])){
+    sampXY$x[i]=NA
+  }
+}
+#get rid of all rows with NA
+sampXY=na.omit(sampXY)
+dim(sampXY)
+#model
+fit2=lm(sampXY$y~sampXY$x)
+summary(fit2)
+#plot the data
+plot(sampXY$y~sampXY$x,main=paste("y=",coef(fit2[1])[1],"+",coef(fit2[1])[2],"X","\n R^2="
+                    ,summary(fit2)$r.squared," ,sd=",er," ,missingness=",miss,sep=""))
+#draw best line of fit
+abline(coef(fit2[1]),coef(fit2[2]),col="red",lwd=5)
+```
+
+Missing data is imputed with mean values for each variable
+```{r}
+#the q4 data from the previous impute method, locations of the missing values are the same
+meanImp=q4
+
+#calculate mean of x and y, for imputing
+meanX=mean(meanImp$x,na.rm=T)
+meanY=mean(meanImp$y,na.rm=T)
+
+#check for NAs and replace them with the mean of the corresponding x/y
+#checking for x
+for(i in 1:dim(meanImp)[1]){
+  if(is.na(meanImp$x[i])){
+    meanImp$x[i]=meanX
+  }
+}
+#checking for y
+for(i in 1:dim(sampXY)[1]){
+  if(is.na(meanImp$y[i])){
+    meanImp$y[i]=meanY
+  }
+}
+
+dim(meanImp)
+
+#model
+fit3=lm(meanImp$y~meanImp$x)
+summary(fit3)
+#plot the data
+plot(meanImp$y~meanImp$x,main=paste("y=",coef(fit3[1])[1],"+",coef(fit3[1])[2],"X","\n R^2="
+                    ,summary(fit3)$r.squared," ,sd=",er," ,missingness=",miss,sep=""))
+#draw best line of fit
+abline(coef(fit3[1]),coef(fit3[2]),col="red",lwd=5)
+```
+
+Alternative way of imputing, nearest neighbor imputation
+
+```{r}
+#the q4 data from the previous impute method, locations of the missing values are the same
+parImp=q4
+
+#create two models with response x and y, this is ok to do since they are indenpendent and normally distributed
+parX.lm=lm(parImp$x~parImp$y, data=parImp)
+#getting the alpha and beta for the X model
+alphaX=coef(parX.lm)[1]
+betaX=coef(parX.lm)[2]
+
+parY.lm=lm(parImp$y~parImp$x, data=parImp)
+#getting the alpha and beta for the X model
+alphaY=coef(parY.lm)[1]
+betaY=coef(parY.lm)[2]
+
+#check the location of missing values in X and replace it by prediction
+for(i in 1:dim(parImp)[1]){
+  if(is.na(parImp$x[i])){
+    if(is.na(parImp$y[i]) == F){
+      #parImp$x[i]=alphaX + betaX*parImp$y[i] #no noise
+      #parImp$x[i]=alphaX + betaX*parImp$y[i] + rnorm(runif(1000),mean=0,sd=10) #+ noise
+      parImp$x[i]=alphaX + betaX*parImp$y[i] + rnorm(runif(1000),sd=er) #+ noise
+    }
+    
+  }
+}
+#check the location of missing values in Y and replace it by prediction
+for(i in 1:dim(parImp)[1]){
+  if(is.na(parImp$y[i])){
+    if(is.na(parImp$x[i]) == F){
+      #parImp$y[i]=alphaY + betaY*parImp$x[i]#no noise
+      #parImp$y[i]=alphaY + betaY*parImp$x[i] + rnorm(runif(1000),mean=0,sd=10) #plus noise
+      parImp$y[i]=alphaY + betaY*parImp$x[i] + rnorm(runif(1000),sd=er) #plus noise
+    }
+    
+  }
+}
+
+fit4=lm(parImp$y~parImp$x)
+summary(fit4)
+#plot the data
+plot(parImp$y~parImp$x,main=paste("y=",coef(fit4[1])[1],"+",coef(fit4[1])[2],"X","\n R^2="
+                    ,summary(fit4)$r.squared," ,sd=",er," ,missingness=",miss,sep=""),xlim=c(-3,3))
+abline(coef(fit4[1]),coef(fit4[2]),col="red",lwd=5)
+
+
+#q4
+```
+

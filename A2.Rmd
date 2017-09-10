@@ -1,0 +1,258 @@
+---
+title: "747A2"
+author: "Charco"
+date: "August 17, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE) 
+#knitr::opts_knit$set(root.dir = "/Volumes/VERBATIM/Postgrad/Stats747/Assignment 2")
+knitr::opts_knit$set(root.dir = "E:/Postgrad/Stats747/Assignment 2")
+#knitr::opts_knit$set(root.dir = "J:/Postgrad/Stats747/Assignment 2")
+```
+
+
+Question 2a
+```{r}
+enquiry.df = read.csv("enquiry.csv")
+enquiry.df1=enquiry.df
+#check if the input data's dimension matches the original csv file
+dim(enquiry.df1)
+
+#Education level = Q77
+#Income level = Q84
+
+#NA checks
+sum(is.na(enquiry.df1$Q77))
+sum(is.na(enquiry.df1$Q84))
+#1way table
+table(enquiry.df1$Q77)
+table(enquiry.df1$Q84)
+#2way table
+table(enquiry.df1$Q77, enquiry.df1$Q84)
+#table(enquiry.df$Q84, enquiry.df$Q77)
+
+enquiry.df2 = enquiry.df1
+#Sorting the missing values from education
+enquiry.df2$Q77[which(enquiry.df2$Q77 == 8)] = 5
+#Sorting the missing values from income
+enquiry.df2$Q84[which(enquiry.df2$Q84 == 8 & enquiry.df2$Q77 == 2)] = 1
+enquiry.df2$Q84[which(enquiry.df2$Q84 == 10 & enquiry.df2$Q77 == 2)] = 1
+enquiry.df2$Q84[which(enquiry.df2$Q84 == 8 & enquiry.df2$Q77 == 3)] = 2
+enquiry.df2$Q84[which(enquiry.df2$Q84 == 8 & enquiry.df2$Q77 == 4)] = 7
+enquiry.df2$Q84[which(enquiry.df2$Q84 == 10 & enquiry.df2$Q77 == 4)] = 7
+enquiry.df2$Q84[which(enquiry.df2$Q84 == 10 & enquiry.df2$Q77 == 5)] = 7
+
+table(enquiry.df2$Q77, enquiry.df2$Q84)
+```
+
+```{r}
+#data check before imputation
+summary(enquiry.df2)
+#minimum rating should be 1 and maximum rating should be 10, there appears to be some 12s in the data set
+#question which requires ratings are from columns 2-15
+#if there are ratings over 10 turn them into NA#################### OR JUST make them 10?
+for(i in 2:15){
+  #find all the >10s in each column
+  miss = which(enquiry.df2[,i] > 10)
+  #replace them with NA
+  enquiry.df2[miss,i] = NA
+}
+
+#if the observation has missing values in every Q37, delete this person
+miss=(which(is.na(enquiry.df2$Q37A1) & is.na(enquiry.df2$Q37A2) & is.na(enquiry.df2$Q37A3) 
+            & is.na(enquiry.df2$Q37A4) & is.na(enquiry.df2$Q37A11) & is.na(enquiry.df2$Q37A12) 
+            & is.na(enquiry.df2$Q37A13) & is.na(enquiry.df2$Q37A14) & is.na(enquiry.df2$Q37A15) 
+            & is.na(enquiry.df2$Q37A16) & is.na(enquiry.df2$Q37A17)))
+#check the number of observations that has NA in all Q37s
+length(miss)
+#remove the observations
+enquiry.df2=enquiry.df2[-miss,]
+#original dataframe has 1200 observations, 222 observations has NAs in all Q37s
+#the result dataframe should have 1200-222=978 observations
+dim(enquiry.df2)
+
+#Random hot-deck imputation
+#1 Divide data into imputation classes
+#2 Replace each missing value with the data from a randomly chosen donor in the same class
+
+#get all the columns that is Q37
+grep("Q37|32",colnames(enquiry.df2))
+#q32 and q37 columns are 2:13
+
+#for loop 1:number of observations in the data
+for(i in 1:nrow(enquiry.df2)){
+  #2:13 for q32 and q37 columns
+  for(j in 2:13){
+    #find the NAs
+    if(is.na(enquiry.df2[i,j])){
+      #find the income level for the current observation
+      curIncome=enquiry.df2[i,]$Q84
+      #get all the observations that have the same income level as the current observation's income
+      simIncome=which(enquiry.df2$Q84 == curIncome)
+      #group all the observations that have the same income level
+      newDf=enquiry.df2[simIncome,]
+      #get the corresponding question's answer from the new df (in this case its the j'th column)
+      #randomly get a replacement value that is not NA
+      replaceVal=sample(na.omit(newDf[,j]))[1]
+      #replace the NA with the random value
+      enquiry.df2[i,j]=replaceVal
+    }
+  }
+}
+
+summary(enquiry.df2)
+```
+
+Q2c
+```{r}
+#use similar method as q2b
+#basically the same, need to make minor changes
+enquiry.df3=enquiry.df
+#check if there are 9s in the dataset
+which(enquiry.df3$Q84 == 9)
+#turn the 10s into 9s
+enquiry.df3$Q84[which(enquiry.df3$Q84 == 10)] = 9
+#check code 10s
+which(enquiry.df3$Q84 == 10)
+#data check before imputation
+summary(enquiry.df3)
+#minimum rating should be 1 and maximum rating should be 10, there appears to be some 12s in the data set
+#question which requires ratings are from columns 2-15
+#if there are ratings over 10 turn them into NA#################### OR JUST make then 10?
+for(i in 2:15){
+  #find all the >10s in each column
+  miss = which(enquiry.df3[,i] > 10)
+  #replace them with NA
+  enquiry.df3[miss,i] = NA
+}
+
+#if the observation has missing values in every Q37, delete this person
+miss=(which(is.na(enquiry.df3$Q37A1) & is.na(enquiry.df3$Q37A2) & is.na(enquiry.df3$Q37A3) 
+            & is.na(enquiry.df3$Q37A4) & is.na(enquiry.df3$Q37A11) & is.na(enquiry.df3$Q37A12) 
+            & is.na(enquiry.df3$Q37A13) & is.na(enquiry.df3$Q37A14) & is.na(enquiry.df3$Q37A15) 
+            & is.na(enquiry.df3$Q37A16) & is.na(enquiry.df3$Q37A17)))
+#remove the observations
+enquiry.df3=enquiry.df3[-miss,]
+
+#Random hot-deck imputation
+#1 Divide data into imputation classes
+#2 Replace each missing value with the data from a randomly chosen donor in the same class
+
+#for loop 1:number of observations in the data
+for(i in 1:nrow(enquiry.df3)){
+  #question which requires ratings are from columns 2-15
+  for(j in 2:15){
+    #find the NAs
+    if(is.na(enquiry.df3[i,j])){
+      #randomly get a replacement value that is not NA from the same column (same question)
+      replaceVal=sample(na.omit(enquiry.df3[,j]))[1]
+      #replace the NA with the random value
+      enquiry.df3[i,j]=replaceVal
+    }
+  }
+}
+
+summary(enquiry.df3)
+```
+
+Q3
+```{r}
+library(s20x)
+#pair plot
+pairs20x(enquiry.df3)
+
+#analyse
+#create a null object to store the coefficients
+enquiry.df3.coeff = NULL
+
+#the dataframe consist of 15columns, column 1 is the id, 2 should be our response
+#fitting regressions with only one explanatory variable with every columns 3:13, since only
+#3:13 columns are of interest, they explain the service, columns 14:15 are personal info
+
+#Simple linear regression
+for(i in 3:13){
+  enquiry.df3.coeff = c(enquiry.df3.coeff, lm(enquiry.df3[,2] ~ enquiry.df3[,i])$coeff[2])
+}
+#1st entry, the overall mean of each explanatory variable
+#2nd entry, the correlation of each explanatory(column3:13) with the response(column2)
+#3rd entry, each explanatory vairable's coeff when fitted SLR individually against the response
+mat1=cbind(apply(enquiry.df3,2,mean)[3:13], cor(enquiry.df3)[3:13,2], enquiry.df3.coeff)
+#give meaningful names to the matrix
+colnames(mat1)=c("mean", "correlation", "SLR coeff")
+
+#performance importance matrix
+#mean for each explanatory
+imMean=apply(enquiry.df3,2,mean)[3:13]
+#the importance index = correlation * individual reg coeff
+imInd=cor(enquiry.df3)[3:13,2]*enquiry.df3.coeff
+imMat=cbind(imMean, imInd)
+#plot of importance index by Means
+plot(imMat[,1],imMat[,2], xlab="Performance (Means)", ylab="Importance Index", 
+     main="Importance Index by Mean")
+abline(v=sum(range(imMat[,1]/2)))
+abline(h=sum(range(imMat[,2]/2)))
+#giving the points in the plot names, so i can be viewed visually
+pointNames=c("Phone","Ease", "Listen", "Resolve enquiry", "Follow through", "Manners", 
+             "Understandable", "Knowledge", "Well treated", "Professional", "Response speed")
+text(imMat[,1],imMat[,2]+0.005,pointNames)
+text(range(imMat[,1])[1]+0.01,range(imMat[,2])[2],"Concern", font=4,cex=2)
+text(range(imMat[,1])[2]-0.05,sum(range(imMat[,2]/2))+0.01,"Strength", font=4,cex=2)
+text(range(imMat[,1])[2]-0.05,range(imMat[,2])[1],"Maintain or divert", font=4,cex=2)
+text(range(imMat[,1])[1]+0.05,range(imMat[,2])[1],"Secondary drivers", font=4,cex=2)
+```
+
+Q4
+```{r}
+#Export file
+#write.csv(enquiry.df3, file = "q3c.csv", row.names = FALSE)
+#logistic
+#install.packages("sas7bdat")
+library(sas7bdat)
+#read the file exported from sas
+q4 = read.sas7bdat("enquiry2c2.sas7bdat")
+#change the overall rating, Overall>=9 then=1, otherwise=0
+q4$Overall=ifelse(q4$Overall >= 9, 1 ,0)
+#perform logistic regression
+q4.fit=glm(Overall ~ Factor1+Factor2, family = binomial, data=q4)
+summary(q4.fit)
+#subset the factor1 and factor2 out (take out intercept)
+fac=q4.fit$coeff[-1]
+fac=exp(fac)
+#Factor estimate from SAS
+# fEst=c(0.52132232, 0.81828404, 0.91804687, 0.75603702, 0.88000989,
+#        0.90948632, 0.85213921, 0.79353521, 0.76070605, 0.86969923, 0.86242600)
+fac1=c(0.21695, 0.21477, 0.27098, -0.14872, -0.07883, -0.04606, 0.27050, 0.21380, 0.28889, -0.13060, -0.18727)
+fac2=c(-0.10445 ,-0.06321 ,-0.11820 , 0.30451,0.25251 ,0.22368 ,-0.12521 ,-0.06493 ,-0.15912 ,0.30019 ,0.35063)
+#Calculate the importance index SUMPRODUCT of coefficient and the factors
+facMat=cbind(fac1,fac2, fac[1]*fac1 + fac2*fac[2])
+colnames(facMat)=c("Factor1", "Factor2", "Importance")
+rownames(facMat)=c(pointNames)
+facMat
+#calculate the proportions of >=9
+#length(which(tt>8))/length(tt)
+#prop vec
+prop=c()
+for(i in 3:13){
+  prop[i]=(length(which(q4[,i]>=9))/nrow(q4))
+}
+#correct the vector
+prop=prop[-(1:2)]
+
+#plot
+plot(prop,facMat[,3], xlab="Proportions 9,10 ratings", ylab="Importance Index by proportion",
+main="Importance Index VS Proportions")
+abline(v=sum(range(prop/2)))
+abline(h=sum(range(facMat[,3]/2)))
+#giving the points in the plot names, so i can be viewed visually
+pointNames=c("Phone","Ease", "Listen", "Resolve enquiry", "Follow through", "Manners",
+"Understandable", "Knowledge", "Well treated", "Professional", "Response speed")
+text(prop,facMat[,3]+0.15,pointNames)
+text(range(prop)[1]+0.01,range(facMat[,3])[2],"Concern", font=4,cex=2)
+text(range(prop)[2]-0.05,sum(range(facMat[,3]/2))+0.15,"Strength", font=4,cex=2)
+text(range(prop)[2]-0.05,range(facMat[,3])[1],"Maintain or divert", font=4,cex=2)
+text(range(prop)[1]+0.02,range(facMat[,3])[1]-0.1,"Secondary drivers", font=4,cex=2)
+
+```
+
