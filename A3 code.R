@@ -1,12 +1,11 @@
 library(dplyr)
 setwd("J:/Postgrad/Stats747/Assignment 3")
-#ff
 original.df = read.csv("Assn3R.csv",header=T)
 str(original.df)
 #clean the data
 original.df$PV = as.numeric(gsub(",","",original.df$PV))
 original.df$Time = 1:(dim(original.df)[1])
-# original.df = select(original.df, -X)
+
 
 allcomb = function(x,y){
   xx = NULL
@@ -26,9 +25,6 @@ allcomb = function(x,y){
 }
 
 adstock = function(data, RockDecay, RliveDecay){
-  # RockDecay = 0.3
-  # RliveDecay = 0.01
-  
   Rock.adstock = c(data$Rock.Ads[1] * RockDecay)
   Rlive.adstock = c(data$Rlive.Ads[1] * RliveDecay)
   
@@ -42,16 +38,10 @@ adstock = function(data, RockDecay, RliveDecay){
 }
 
 modelSim = function(data, decay){
-
-  # data = select(data, -PV, -Rock.Ads, -Rlive.Ads, -Day, -date)
-  # data = select(data, -PV, -Day, -date)
   best = NULL
   bestfit = NULL
   rsq = 0
   for(i in 1:(dim(decay)[1])){
-  # for(i in 1:1){
-    # cat(paste(i, (decay$Rock.decay)[i], (decay$Rock.decay)[i], sep=" "))
-    # data2 = adstock(data, (decay$Rock.decay)[i], (decay$Rlive.decay)[i] )
     data2 = adstock(data, decay$Rock.decay[i], decay$Rlive.decay[i])
     
     data2 = select(data2,-Rock.Ads, -Rlive.Ads, -date, -PV)
@@ -66,8 +56,6 @@ modelSim = function(data, decay){
       result = list(best, summary(bestfit), bestfit, data2)
     }
   }
-  # return(best)
-  
   return(result)
 }
 #Create all possible combinations of decay rates for Rlive and Rock to 2dp
@@ -98,6 +86,7 @@ points(original.df$Time[32],original.df$LN.PV[32], pch=19, col="blue", cex = 1.2
 text(original.df$Time[32],original.df$LN.PV[32] - 0.1, "1/1/2008", font = 4, col = "blue")
 legend("topright", c("Log(PV)","Mondays", "Christmas period"), 
        lty=c(1 ,1 ,NA), pch=c(NA,NA,15), col=c(1, "red", "green"))
+
 #22/12/2007 labour day, saturday
 # 25 26 christmas boxing
 #(01 02)/01/2008 new years
@@ -115,7 +104,6 @@ legend("topright", c("original","predicted"), lty=c(NA,1), pch=c(1,NA), col=c(1,
 #assumption checks
 par(mfrow = c(2,2))
 plot(xmas.result[[3]], which = 1:6)
-par(mfrow = c(1,1)) 
 #model summary
 xmas.result[[1]]
 anova(xmas.result[[3]])
