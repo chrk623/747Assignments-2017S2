@@ -1,4 +1,5 @@
 library(dplyr)
+library(s20x)
 setwd("J:/Postgrad/Stats747/Assignment 3")
 original.df = read.csv("Assn3R.csv",header=T)
 str(original.df)
@@ -62,7 +63,7 @@ modelSim = function(data, decay){
 Rock.decay = seq(0,1,by=0.01)
 Rlive.decay = seq(0,1,by=0.01)
 decays = allcomb(Rock.decay,Rlive.decay)
-
+pairs(original.df)
 #fitting the first model with original data
 original.result = modelSim(original.df, decays)
 original.result[[1]]
@@ -108,5 +109,5 @@ plot(xmas.result[[3]], which = 1:6)
 xmas.result[[1]]
 anova(xmas.result[[3]])
 xmas.result[[2]]
-
-        
+100*exp(confint(xmas.result[[3]])-1)
+exp(confint(xmas.result[[3]]))
