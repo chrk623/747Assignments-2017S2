@@ -109,6 +109,6 @@ plot(xmas.result[[3]], which = 1:6)
 xmas.result[[1]]
 anova(xmas.result[[3]])
 xmas.result[[2]]
-100*exp(confint(xmas.result[[3]])-1)
+100*(exp(confint(xmas.result[[3]]))-1)
 exp(confint(xmas.result[[3]]))
 
