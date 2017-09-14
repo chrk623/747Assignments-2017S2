@@ -111,3 +111,4 @@ anova(xmas.result[[3]])
 xmas.result[[2]]
 100*exp(confint(xmas.result[[3]])-1)
 exp(confint(xmas.result[[3]]))
+
