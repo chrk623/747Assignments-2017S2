@@ -1,5 +1,6 @@
 library(dplyr)
 library(s20x)
+
 setwd("J:/Postgrad/Stats747/Assignment 3")
 original.df = read.csv("Assn3R.csv",header=T)
 str(original.df)
